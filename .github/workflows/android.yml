@@ -38,12 +38,20 @@ jobs:
             echo y | "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
           fi
 
-      - name: Build debug APK with Buildozer
+      - name: Build debug APK with Buildozer (capture log)
         run: |
           SPEC_DIR="$(dirname "$(find . -maxdepth 3 -name buildozer.spec | head -1)")"
           echo "spec dir: $SPEC_DIR"
           cd "$SPEC_DIR"
-          buildozer -v android debug
+          buildozer -v android debug 2>&1 | tee buildozer.log || true
+
+      - name: Upload build log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: simul-trans-build-log
+          path: '**/buildozer.log'
+          retention-days: 7
 
       - name: List produced artifacts
         run: |
@@ -51,12 +59,10 @@ jobs:
           cd "$SPEC_DIR"
           echo "=== bin/ contents ==="
           ls -la bin/ 2>/dev/null || echo "no bin/ dir"
-          echo "=== .buildozer/ contents ==="
-          ls -la .buildozer/ 2>/dev/null || echo "no .buildozer/ dir"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
-        if: always()
+        if: success()
         with:
           name: simul-trans-debug-apk
           path: '**/bin/*.apk'
