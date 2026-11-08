@@ -43,6 +43,9 @@ api = 33
 # (str) Minimum Android API level
 minapi = 21
 
+# (str) Android build-tools version to use (pinned to avoid license prompts on latest)
+android.build_tools = 33.0.0
+
 # (bool) Automatically accept Android SDK licenses (needed in CI)
 accept_sdk_license = True
 

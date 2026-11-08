@@ -33,14 +33,14 @@ jobs:
 
       - name: Pre-accept all Android SDK licenses
         run: |
-          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
+          SDK_DIR="/github/home/.buildozer/android/platform/android-sdk"
           if [ -f "$SDK_DIR/tools/bin/sdkmanager" ]; then
             yes | "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
           fi
 
       - name: Install required SDK components
         run: |
-          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
+          SDK_DIR="/github/home/.buildozer/android/platform/android-sdk"
           if [ -f "$SDK_DIR/tools/bin/sdkmanager" ]; then
             "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" "platform-tools" "build-tools;33.0.0" "platforms;android-33" >/dev/null 2>&1 || true
           fi
