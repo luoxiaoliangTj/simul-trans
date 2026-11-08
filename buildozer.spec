@@ -10,7 +10,7 @@ package.name = simultrans
 package.domain = org.lxl
 
 # (str) Source code where the main.py lives
-source = .
+source.dir = .
 
 # (str) Application versioning
 version = 0.1
