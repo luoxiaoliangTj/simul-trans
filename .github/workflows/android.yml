@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-apk:
@@ -49,11 +49,14 @@ jobs:
         run: |
           SPEC_DIR="$(dirname "$(find . -maxdepth 3 -name buildozer.spec | head -1)")"
           cd "$SPEC_DIR"
-          ls -la bin/ 2>/dev/null || true
+          echo "=== bin/ contents ==="
+          ls -la bin/ 2>/dev/null || echo "no bin/ dir"
+          echo "=== .buildozer/ contents ==="
+          ls -la .buildozer/ 2>/dev/null || echo "no .buildozer/ dir"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
-        if: success()
+        if: always()
         with:
           name: simul-trans-debug-apk
           path: '**/bin/*.apk'
