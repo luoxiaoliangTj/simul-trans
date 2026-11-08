@@ -165,11 +165,3 @@ minapi = 21
 
 # (str) iOS architectures
 #ios.archs = armv7 arm64
-
-[buildozer]
-
-# (int) Log level (0 = none, 1 = info, 2 = debug)
-log_level = 2
-
-# (int) Display warning if buildozer is run as root (0 = false, 1 = true)
-warn_on_root = 1
