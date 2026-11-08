@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: kivy/buildozer:latest
+    timeout-minutes: 55
+    env:
+      ANDROID_SDK_ROOT: /root/.buildozer/android/platform/android-sdk
+      ANDROID_NDK_ROOT: /root/.buildozer/android/platform/android-ndk-r25b
+      DEBIAN_FRONTEND: noninteractive
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,23 +31,18 @@ jobs:
           find . -maxdepth 3 -name buildozer.spec -print
           buildozer --version || true
 
+      - name: Pre-accept Android SDK licenses
+        run: |
+          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
+          if [ -f "$SDK_DIR/tools/bin/sdkmanager" ]; then
+            echo y | "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
+          fi
+
       - name: Build debug APK with Buildozer
         run: |
           SPEC_DIR="$(dirname "$(find . -maxdepth 3 -name buildozer.spec | head -1)")"
           echo "spec dir: $SPEC_DIR"
           cd "$SPEC_DIR"
-
-          # Pass 1: download Android SDK/NDK (may fail at license prompt — expected)
-          buildozer -v android debug || true
-
-          # Accept all Android SDK licenses non-interactively
-          SDK_DIR="$HOME/.buildozer/android/platform/android-sdk"
-          if [ -f "$SDK_DIR/tools/bin/sdkmanager" ]; then
-            echo "Accepting Android SDK licenses ..."
-            yes | "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
-          fi
-
-          # Pass 2: actual APK build (SDK/NDK already downloaded, licenses accepted)
           buildozer -v android debug
 
       - name: List produced artifacts
