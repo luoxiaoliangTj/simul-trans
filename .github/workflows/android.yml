@@ -44,7 +44,15 @@ jobs:
           SPEC_DIR="$(dirname "$(find . -maxdepth 3 -name buildozer.spec | head -1)")"
           echo "spec dir: $SPEC_DIR"
           cd "$SPEC_DIR"
-          buildozer -v android debug
+          buildozer -v android debug 2>&1 | tee buildozer.log
+
+      - name: Upload build log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: simul-trans-build-log
+          path: '**/buildozer.log'
+          retention-days: 7
 
       - name: List produced artifacts
         run: |
