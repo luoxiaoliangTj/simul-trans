@@ -1,0 +1,40 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    container:
+      image: kivy/buildozer:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show environment
+        run: |
+          echo "HOME=$HOME"
+          whoami
+          buildozer --version || true
+
+      - name: Build debug APK with Buildozer
+        run: |
+          buildozer -v android debug
+
+      - name: List produced artifacts
+        run: |
+          ls -la bin/ 2>/dev/null || true
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: simul-trans-debug-apk
+          path: bin/*.apk
+          retention-days: 7
