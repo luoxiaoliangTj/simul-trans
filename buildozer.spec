@@ -43,6 +43,9 @@ api = 33
 # (str) Minimum Android API level
 minapi = 21
 
+# (bool) Automatically accept Android SDK licenses (needed in CI)
+accept_sdk_license = True
+
 # (list) Android architectures to build
 archs = arm64-v8a
 
