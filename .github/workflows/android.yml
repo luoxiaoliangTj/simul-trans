@@ -17,18 +17,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show environment
+      - name: Show environment and locate spec
         run: |
           echo "HOME=$HOME"
           whoami
+          pwd
+          ls -la
+          find . -maxdepth 3 -name buildozer.spec -print
           buildozer --version || true
 
       - name: Build debug APK with Buildozer
         run: |
+          SPEC_DIR="$(dirname "$(find . -maxdepth 3 -name buildozer.spec | head -1)")"
+          echo "spec dir: $SPEC_DIR"
+          cd "$SPEC_DIR"
           buildozer -v android debug
 
       - name: List produced artifacts
         run: |
+          SPEC_DIR="$(dirname "$(find . -maxdepth 3 -name buildozer.spec | head -1)")"
+          cd "$SPEC_DIR"
           ls -la bin/ 2>/dev/null || true
 
       - name: Upload APK artifact
@@ -36,5 +44,5 @@ jobs:
         if: success()
         with:
           name: simul-trans-debug-apk
-          path: bin/*.apk
+          path: '**/bin/*.apk'
           retention-days: 7
