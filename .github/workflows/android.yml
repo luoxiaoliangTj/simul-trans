@@ -15,8 +15,6 @@ jobs:
       image: kivy/buildozer:latest
     timeout-minutes: 55
     env:
-      ANDROID_SDK_ROOT: /root/.buildozer/android/platform/android-sdk
-      ANDROID_NDK_ROOT: /root/.buildozer/android/platform/android-ndk-r25b
       DEBIAN_FRONTEND: noninteractive
     steps:
       - name: Checkout repository
@@ -31,34 +29,22 @@ jobs:
           find . -maxdepth 3 -name buildozer.spec -print
           buildozer --version || true
 
-      - name: Pre-accept all Android SDK licenses
+      - name: Pre-accept all Android SDK licenses and install components
         run: |
           SDK_DIR="/github/home/.buildozer/android/platform/android-sdk"
           if [ -f "$SDK_DIR/tools/bin/sdkmanager" ]; then
+            echo "Accepting all SDK licenses ..."
             yes | "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
-          fi
-
-      - name: Install required SDK components
-        run: |
-          SDK_DIR="/github/home/.buildozer/android/platform/android-sdk"
-          if [ -f "$SDK_DIR/tools/bin/sdkmanager" ]; then
+            echo "Installing platform-tools, build-tools 33.0.0, platform android-33 ..."
             "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" "platform-tools" "build-tools;33.0.0" "platforms;android-33" >/dev/null 2>&1 || true
           fi
 
-      - name: Build debug APK with Buildozer (capture log)
+      - name: Build debug APK with Buildozer
         run: |
           SPEC_DIR="$(dirname "$(find . -maxdepth 3 -name buildozer.spec | head -1)")"
           echo "spec dir: $SPEC_DIR"
           cd "$SPEC_DIR"
-          buildozer -v android debug 2>&1 | tee buildozer.log || true
-
-      - name: Upload build log
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: simul-trans-build-log
-          path: '**/buildozer.log'
-          retention-days: 7
+          buildozer -v android debug
 
       - name: List produced artifacts
         run: |
