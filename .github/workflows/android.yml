@@ -29,29 +29,36 @@ jobs:
           find . -maxdepth 3 -name buildozer.spec -print
           buildozer --version || true
 
-      - name: Pre-accept all Android SDK licenses and install components
+      - name: Build pass 1 (download SDK/NDK, may stop at license prompt)
+        run: |
+          SPEC_DIR="$(dirname "$(find . -maxdepth 3 -name buildozer.spec | head -1)")"
+          echo "spec dir: $SPEC_DIR"
+          cd "$SPEC_DIR"
+          buildozer -v android debug 2>&1 | tee buildozer_pass1.log || true
+
+      - name: Accept all Android SDK licenses
         run: |
           SDK_DIR="/github/home/.buildozer/android/platform/android-sdk"
           if [ -f "$SDK_DIR/tools/bin/sdkmanager" ]; then
             echo "Accepting all SDK licenses ..."
             yes | "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
-            echo "Installing platform-tools, build-tools 33.0.0, platform android-33 ..."
-            "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" "platform-tools" "build-tools;33.0.0" "platforms;android-33" >/dev/null 2>&1 || true
           fi
 
-      - name: Build debug APK with Buildozer
+      - name: Build pass 2 (actual APK build, licenses accepted)
         run: |
           SPEC_DIR="$(dirname "$(find . -maxdepth 3 -name buildozer.spec | head -1)")"
           echo "spec dir: $SPEC_DIR"
           cd "$SPEC_DIR"
-          buildozer -v android debug 2>&1 | tee buildozer.log
+          buildozer -v android debug 2>&1 | tee buildozer_pass2.log
 
-      - name: Upload build log
+      - name: Upload build logs
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: simul-trans-build-log
-          path: '**/buildozer.log'
+          path: |
+            **/buildozer_pass1.log
+            **/buildozer_pass2.log
           retention-days: 7
 
       - name: List produced artifacts
