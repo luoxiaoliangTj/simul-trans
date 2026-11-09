@@ -46,7 +46,7 @@ jobs:
 
       - name: Patch p4a pip upgrade to avoid incompatibility
         run: |
-          P4A_DIR="$(find . -maxdepth 4 -path '*/pythonforandroid/build.py' | head -1 | xargs dirname | xargs dirname)"
+          P4A_DIR=".buildozer/android/platform/python-for-android"
           echo "p4a dir: $P4A_DIR"
           sed -i "s|pip install -U pip|pip install 'pip<24'|g" "$P4A_DIR/pythonforandroid/build.py"
           grep -n "pip install" "$P4A_DIR/pythonforandroid/build.py"
