@@ -49,6 +49,7 @@ jobs:
           P4A_DIR=".buildozer/android/platform/python-for-android"
           echo "p4a dir: $P4A_DIR"
           sed -i "s|pip install -U pip|pip install 'pip<24'|g" "$P4A_DIR/pythonforandroid/build.py"
+          sed -i "s|install -v --target '{0}' --no-deps -r requirements.txt|install -v --target '{0}' --no-deps --no-binary :all: -r requirements.txt|g" "$P4A_DIR/pythonforandroid/build.py"
           grep -n "pip install" "$P4A_DIR/pythonforandroid/build.py"
 
       - name: Build pass 2 (actual APK build, licenses accepted)
