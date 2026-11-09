@@ -12,9 +12,6 @@ package.domain = org.lxl
 # (str) Source code where the main.py lives
 source.dir = .
 
-# (str) python-for-android local checkout (avoid network clone of kivy/python-for-android)
-p4a.source_dir = /home/lxl/.buildozer/android/platform/python-for-android
-
 # (str) Application versioning
 version = 0.1
 
