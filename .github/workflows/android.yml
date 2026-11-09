@@ -44,6 +44,13 @@ jobs:
             yes | "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
           fi
 
+      - name: Patch p4a pip upgrade to avoid incompatibility
+        run: |
+          P4A_DIR="$(find . -maxdepth 4 -path '*/pythonforandroid/build.py' | head -1 | xargs dirname | xargs dirname)"
+          echo "p4a dir: $P4A_DIR"
+          sed -i "s|pip install -U pip|pip install 'pip<24'|g" "$P4A_DIR/pythonforandroid/build.py"
+          grep -n "pip install" "$P4A_DIR/pythonforandroid/build.py"
+
       - name: Build pass 2 (actual APK build, licenses accepted)
         run: |
           SPEC_DIR="$(dirname "$(find . -maxdepth 3 -name buildozer.spec | head -1)")"
