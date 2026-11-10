@@ -16,6 +16,9 @@ jobs:
     timeout-minutes: 55
     env:
       DEBIAN_FRONTEND: noninteractive
+      ANDROID_ACCEPT_SDK_LICENSES: yes
+      ANDROID_SDK_ROOT: /github/home/.buildozer/android/platform/android-sdk
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -36,21 +39,44 @@ jobs:
           cd "$SPEC_DIR"
           buildozer -v android debug 2>&1 | tee buildozer_pass1.log || true
 
-      - name: Accept all Android SDK licenses
+      - name: Locate and accept all Android SDK licenses
         run: |
-          SDK_DIR="/github/home/.buildozer/android/platform/android-sdk"
-          if [ -f "$SDK_DIR/tools/bin/sdkmanager" ]; then
+          SDK_CANDIDATES=(
+            "/github/home/.buildozer/android/platform/android-sdk"
+            "$HOME/.buildozer/android/platform/android-sdk"
+            "$ANDROID_SDK_ROOT"
+          )
+          SDK_DIR=""
+          for c in "${SDK_CANDIDATES[@]}"; do
+            if [ -f "$c/tools/bin/sdkmanager" ]; then
+              SDK_DIR="$c"
+              break
+            fi
+          done
+          if [ -z "$SDK_DIR" ]; then
+            echo "sdkmanager not found in candidates, searching filesystem..."
+            SDK_DIR=$(find / -name sdkmanager -path "*tools/bin*" 2>/dev/null | head -1 | xargs dirname | xargs dirname)
+          fi
+          echo "Using SDK dir: $SDK_DIR"
+          if [ -n "$SDK_DIR" ] && [ -f "$SDK_DIR/tools/bin/sdkmanager" ]; then
             echo "Accepting all SDK licenses ..."
-            yes | "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
+            yes | "$SDK_DIR/tools/bin/sdkmanager" --sdk_root="$SDK_DIR" --licenses || true
+          else
+            echo "WARNING: sdkmanager not found, skipping license acceptance"
           fi
 
       - name: Patch p4a pip upgrade to avoid incompatibility
         run: |
           P4A_DIR=".buildozer/android/platform/python-for-android"
           echo "p4a dir: $P4A_DIR"
-          sed -i "s|pip install -U pip|pip install 'pip<24'|g" "$P4A_DIR/pythonforandroid/build.py"
-          sed -i "s|install -v --target '{0}' --no-deps -r requirements.txt|install -v --target '{0}' --no-deps --no-binary :all: -r requirements.txt|g" "$P4A_DIR/pythonforandroid/build.py"
-          grep -n "pip install" "$P4A_DIR/pythonforandroid/build.py"
+          if [ -d "$P4A_DIR" ]; then
+            sed -i "s|pip install -U pip|pip install 'pip<24'|g" "$P4A_DIR/pythonforandroid/build.py" || true
+            sed -i "s|install -v --target '{0}' --no-deps -r requirements.txt|install -v --target '{0}' --no-deps --no-binary :all: -r requirements.txt|g" "$P4A_DIR/pythonforandroid/build.py" || true
+            sed -i "s|'--only-binary=:all:'|'--no-binary=:all:'|g" "$P4A_DIR/pythonforandroid/build.py" || true
+            grep -n "pip install\|only-binary\|no-binary" "$P4A_DIR/pythonforandroid/build.py" || true
+          else
+            echo "p4a dir not found, skipping patch"
+          fi
 
       - name: Build pass 2 (actual APK build, licenses accepted)
         run: |
